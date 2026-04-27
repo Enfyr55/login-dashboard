@@ -8,18 +8,18 @@
 
     <style>
         body
-		{
-			font-family: "Segoe UI", Arial;
-			background: #0f172a;
-			color: #e2e8f0;
-			margin: 0;
+        {
+            font-family: "Segoe UI", Arial;
+            background: #0f172a;
+            color: #e2e8f0;
+            margin: 0;
 
-			display: flex;
-			justify-content: center;
-			align-items: flex-start;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
 
-			padding-top: 80px;
-		}
+            padding-top: 80px;
+        }
 
         .wrapper
         {
@@ -32,40 +32,22 @@
         }
 
         .card
-		{
-			background: #1e293b;
-			padding: 30px;
-			border-radius: 14px;
-			width: 400px;
-			box-shadow: 0 10px 25px rgba(0,0,0,0.3);
-
-			margin-top: 20px;
-
-			max-height: 80vh;   /* 👈 ikke fast høyde */
-			display: flex;
-			flex-direction: column;
-		}
-
-		.history
-		{
-			margin-top: 20px;
-			text-align: left;
-
-			flex: 1;              /* 👈 KEY */
-			overflow-y: auto;
-
-			border-top: 1px solid #334155;
-			padding-top: 10px;
-		}
-
-        .row
         {
-            font-size: 13px;
-            padding: 6px 0;
-            border-bottom: 1px solid #1e293b;
+            background: #1e293b;
+            padding: 30px;
+            border-radius: 14px;
+            width: 400px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+
+            margin-top: 20px;
+
+            max-height: 80vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
         }
-		
-		        .title
+
+        .title
         {
             font-size: 13px;
             color: #94a3b8;
@@ -76,6 +58,57 @@
             font-size: 28px;
             margin-top: 10px;
             font-weight: 600;
+            color: #60a5fa;
+        }
+
+        .history
+        {
+            margin-top: 20px;
+            text-align: left;
+
+            flex: 1;
+            overflow-y: auto;
+
+            border-top: 1px solid #334155;
+            padding-top: 10px;
+        }
+
+        .row
+        {
+            font-size: 12px;
+            padding: 6px 0;
+            border-bottom: 1px solid #1e293b;
+            padding-left: 20px;
+        }
+
+        .row:hover
+        {
+            background: rgba(255,255,255,0.03);
+            border-radius: 6px;
+        }
+
+        .week
+        {
+            position: sticky;
+            top: 0;
+            background: #1e293b;
+            padding: 6px 0;
+            z-index: 2;
+            font-weight: 600;
+            color: #93c5fd;
+            margin-top: 10px;
+        }
+
+        .day
+        {
+            position: sticky;
+            top: 28px;
+            background: #1e293b;
+            z-index: 1;
+            padding-left: 10px;
+            font-weight: 500;
+            color: #cbd5f5;
+            margin-top: 6px;
         }
     </style>
 </head>
@@ -122,72 +155,65 @@
         return d.toLocaleString("no-NO");
     }
 
-	function renderHistory(data)
-	{
-		const container = document.getElementById("historyList");
-		container.innerHTML = "";
+    function renderHistory(data)
+    {
+        const container = document.getElementById("historyList");
+        container.innerHTML = "";
 
-		let currentWeek = null;
-		let currentDay = null;
+        let currentWeek = null;
+        let currentDay = null;
 
-		data.forEach(row =>
-		{
-			const fixed = row.last_login.replace(" ", "T");
-			const date = new Date(fixed);
+        data.forEach(row =>
+        {
+            const fixed = row.last_login.replace(" ", "T");
+            const date = new Date(fixed);
 
-			const week = getWeekNumber(date);
+            const week = getWeekNumber(date);
+            const dayKey = date.toDateString();
 
-			const dayKey = date.toDateString(); // unik dag
+            // Uke
+            if (week !== currentWeek)
+            {
+                currentWeek = week;
+                currentDay = null;
 
-			// 🔵 Ny uke
-			if (week !== currentWeek)
-			{
-				currentWeek = week;
-				currentDay = null;
+                const weekDiv = document.createElement("div");
+                weekDiv.className = "week";
+                weekDiv.innerText = "Uke " + week;
 
-				const weekDiv = document.createElement("div");
-				weekDiv.style.marginTop = "14px";
-				weekDiv.style.fontWeight = "600";
-				weekDiv.style.color = "#93c5fd";
-				weekDiv.innerText = "Uke " + week;
+                container.appendChild(weekDiv);
+            }
 
-				container.appendChild(weekDiv);
-			}
+            // Dag
+            if (dayKey !== currentDay)
+            {
+                currentDay = dayKey;
 
-			// 🟡 Ny dag
-			if (dayKey !== currentDay)
-			{
-				currentDay = dayKey;
+                const dayDiv = document.createElement("div");
+                dayDiv.className = "day";
 
-				const dayDiv = document.createElement("div");
-				dayDiv.style.marginTop = "6px";
-				dayDiv.style.paddingLeft = "10px";
-				dayDiv.style.fontWeight = "500";
-				dayDiv.style.color = "#cbd5f5";
+                const dayName = capitalize(
+                    date.toLocaleDateString("no-NO", { weekday: "long" })
+                );
 
-				const dayName = capitalize(
-					date.toLocaleDateString("no-NO", { weekday: "long" })
-				);
+                const dateStr = date.toLocaleDateString("no-NO");
 
-				const dateStr = date.toLocaleDateString("no-NO");
+                dayDiv.innerText = `${dayName} ${dateStr}`;
 
-				dayDiv.innerText = `${dayName} ${dateStr}`;
+                container.appendChild(dayDiv);
+            }
 
-				container.appendChild(dayDiv);
-			}
+            // Tid
+            const timeDiv = document.createElement("div");
+            timeDiv.className = "row";
 
-			// ⚪ Tidspunkt
-			const timeDiv = document.createElement("div");
-			timeDiv.className = "row";
-			timeDiv.style.paddingLeft = "20px";
+            const time = date.toLocaleTimeString("no-NO");
 
-			const time = date.toLocaleTimeString("no-NO");
+            timeDiv.innerText = "• " + time;
 
-			timeDiv.innerText = "• " + time;
-
-			container.appendChild(timeDiv);
-		});
-	}
+            container.appendChild(timeDiv);
+        });
+    }
 
     async function loadData()
     {
@@ -225,34 +251,22 @@
         }
     }
 
+    function getWeekNumber(date)
+    {
+        const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+        const dayNum = d.getUTCDay() || 7;
+        d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+        const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+        return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+    }
+
+    function capitalize(str)
+    {
+        return str.charAt(0).toUpperCase() + str.slice(1);
+    }
+
     loadData();
     setInterval(loadData, 30000);
-	
-	function getWeekNumber(date)
-	{
-		const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
-		const dayNum = d.getUTCDay() || 7;
-		d.setUTCDate(d.getUTCDate() + 4 - dayNum);
-		const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
-		return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
-	}
-
-	function formatPretty(dateString)
-	{
-		const fixed = dateString.replace(" ", "T");
-		const d = new Date(fixed);
-
-		const dayName = d.toLocaleDateString("no-NO", { weekday: "long" });
-		const date = d.toLocaleDateString("no-NO");
-		const time = d.toLocaleTimeString("no-NO");
-
-		return `${capitalize(dayName)} ${date}, ${time}`;
-	}
-
-	function capitalize(str)
-	{
-		return str.charAt(0).toUpperCase() + str.slice(1);
-	}
 </script>
 
 </body>
