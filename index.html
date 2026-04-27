@@ -117,7 +117,7 @@
     async function loadData()
     {
         const { data, error } = await supabase
-            .from("logins")
+            .from("login_events")
             .select("*")
             .order("last_login", { ascending: false })
             .limit(1);
