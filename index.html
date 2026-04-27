@@ -8,17 +8,27 @@
 
     <style>
         body
+		{
+			font-family: "Segoe UI", Arial;
+			background: #0f172a;
+			color: #e2e8f0;
+			margin: 0;
+
+			display: flex;
+			justify-content: center;
+			align-items: flex-start;
+
+			padding-top: 80px;
+		}
+
+        .wrapper
         {
-            font-family: "Segoe UI", Arial;
-            background: #0f172a;
-            color: #e2e8f0;
-            margin: 0;
-            padding: 40px;
+            text-align: center;
         }
 
         h1
         {
-            margin-bottom: 30px;
+            margin-bottom: 10px;
         }
 
         .card
@@ -26,8 +36,10 @@
             background: #1e293b;
             padding: 30px;
             border-radius: 14px;
-            width: 350px;
+            width: 400px;
             box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+
+            margin-top: 20px;
         }
 
         .title
@@ -43,48 +55,47 @@
             font-weight: 600;
         }
 
-        .status
+        .history
         {
             margin-top: 20px;
-            font-size: 15px;
-            font-weight: 500;
+            text-align: left;
+            max-height: 250px;
+            overflow-y: auto;
+            border-top: 1px solid #334155;
+            padding-top: 10px;
         }
 
-        .green { color: #22c55e; }
-        .yellow { color: #facc15; }
-        .red { color: #ef4444; }
-
-        .footer
+        .row
         {
-            margin-top: 30px;
-            font-size: 12px;
-            color: #64748b;
+            font-size: 13px;
+            padding: 6px 0;
+            border-bottom: 1px solid #1e293b;
         }
     </style>
 </head>
 
 <body>
 
-<h1>🔍 Login Monitor</h1>
+<div class="wrapper">
 
-<div class="card">
+    <h1>🔍 Login Monitor</h1>
 
-    <div class="title">Last login</div>
-    <div id="lastLogin" class="value">Laster...</div>
+    <div class="card">
 
-    <div id="statusText" class="status">Sjekker...</div>
+        <div class="title">Siste login</div>
+        <div id="lastLogin" class="value">Laster...</div>
 
-</div>
+        <div class="history" id="historyList"></div>
 
-<div class="footer" id="lastUpdated">
-    Oppdaterer...
+    </div>
+
 </div>
 
 <script>
     const supabaseUrl = "https://nyhtzyydxmhfnptabvsm.supabase.co";
+
     const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im55aHR6eXlkeG1oZm5wdGFidnNtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTYyOTg1MzgsImV4cCI6MjA3MTg3NDUzOH0.wandkCM1cj_AEfIq4Mh75vuxv5EYUdWn1fObEoHW3Fc";
 
-    // 🔥 FIX: unngå navnekonflikt
     const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
 
     function formatDate(dateString)
@@ -105,33 +116,18 @@
         return d.toLocaleString("no-NO");
     }
 
-    function updateStatus(lastLogin)
+    function renderHistory(data)
     {
-        if (!lastLogin)
-        {
-            return;
-        }
+        const container = document.getElementById("historyList");
+        container.innerHTML = "";
 
-        const fixed = lastLogin.replace(" ", "T");
-        const diff = Date.now() - new Date(fixed);
-
-        const status = document.getElementById("statusText");
-
-        if (diff < 5 * 60 * 1000)
+        data.forEach(row =>
         {
-            status.innerText = "🟢 Nylig aktivitet";
-            status.className = "status green";
-        }
-        else if (diff < 60 * 60 * 1000)
-        {
-            status.innerText = "🟡 Ingen ny aktivitet nylig";
-            status.className = "status yellow";
-        }
-        else
-        {
-            status.innerText = "🔴 Inaktiv";
-            status.className = "status red";
-        }
+            const div = document.createElement("div");
+            div.className = "row";
+            div.innerText = formatDate(row.last_login);
+            container.appendChild(div);
+        });
     }
 
     async function loadData()
@@ -141,11 +137,7 @@
             const { data, error } = await supabaseClient
                 .from("login_events")
                 .select("*")
-                .order("last_login", { ascending: false })
-                .limit(1);
-
-            console.log("DATA:", data);
-            console.log("ERROR:", error);
+                .order("last_login", { ascending: false });
 
             if (error)
             {
@@ -160,15 +152,12 @@
                 return;
             }
 
-            const row = data[0];
+            const latest = data[0];
 
             document.getElementById("lastLogin").innerText =
-                formatDate(row.last_login);
+                formatDate(latest.last_login);
 
-            updateStatus(row.last_login);
-
-            document.getElementById("lastUpdated").innerText =
-                "Oppdatert: " + new Date().toLocaleTimeString("no-NO");
+            renderHistory(data);
         }
         catch (err)
         {
