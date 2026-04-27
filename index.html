@@ -82,24 +82,40 @@
 
 <script>
     const supabaseUrl = "https://nyhtzyydxmhfnptabvsm.supabase.co";
-    const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im55aHR6eXlkeG1oZm5wdGFidnNtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTYyOTg1MzgsImV4cCI6MjA3MTg3NDUzOH0.wandkCM1cj_AEfIq4Mh75vuxv5EYUdWn1fObEoHW3Fc";
+    const supabaseKey = "YOUR_ANON_KEY_HER";
 
-    const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+    // 🔥 FIX: unngå navnekonflikt
+    const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
 
     function formatDate(dateString)
-	{
-		const fixed = dateString.replace(" ", "T");
-		const d = new Date(fixed);
+    {
+        if (!dateString)
+        {
+            return "Ingen data";
+        }
 
-		return d.toLocaleString("no-NO");
-	}
+        const fixed = dateString.replace(" ", "T");
+        const d = new Date(fixed);
+
+        if (isNaN(d))
+        {
+            return "Ugyldig dato";
+        }
+
+        return d.toLocaleString("no-NO");
+    }
 
     function updateStatus(lastLogin)
     {
-        const fixed = lastLogin.replace(" ", "T");
-		const diff = Date.now() - new Date(fixed);
+        if (!lastLogin)
+        {
+            return;
+        }
 
-		const status = document.getElementById("statusText");
+        const fixed = lastLogin.replace(" ", "T");
+        const diff = Date.now() - new Date(fixed);
+
+        const status = document.getElementById("statusText");
 
         if (diff < 5 * 60 * 1000)
         {
@@ -120,22 +136,30 @@
 
     async function loadData()
     {
-        const { data, error } = await supabase
-            .from("login_events")
-            .select("*")
-            .order("last_login", { ascending: false })
-            .limit(1);
-console.log("DATA:", data);
-console.log("ERROR:", error);
-		
-        if (error)
+        try
         {
-            console.error(error);
-            return;
-        }
+            const { data, error } = await supabaseClient
+                .from("login_events")
+                .select("*")
+                .order("last_login", { ascending: false })
+                .limit(1);
 
-        if (data.length > 0)
-        {
+            console.log("DATA:", data);
+            console.log("ERROR:", error);
+
+            if (error)
+            {
+                document.getElementById("lastLogin").innerText = "Feil ved henting";
+                console.error(error);
+                return;
+            }
+
+            if (!data || data.length === 0)
+            {
+                document.getElementById("lastLogin").innerText = "Ingen data";
+                return;
+            }
+
             const row = data[0];
 
             document.getElementById("lastLogin").innerText =
@@ -145,6 +169,11 @@ console.log("ERROR:", error);
 
             document.getElementById("lastUpdated").innerText =
                 "Oppdatert: " + new Date().toLocaleTimeString("no-NO");
+        }
+        catch (err)
+        {
+            console.error("CRASH:", err);
+            document.getElementById("lastLogin").innerText = "Script-feil";
         }
     }
 
