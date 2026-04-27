@@ -96,8 +96,10 @@
 
     function updateStatus(lastLogin)
     {
-        const diff = Date.now() - new Date(lastLogin);
-        const status = document.getElementById("statusText");
+        const fixed = lastLogin.replace(" ", "T");
+		const diff = Date.now() - new Date(fixed);
+
+		const status = document.getElementById("statusText");
 
         if (diff < 5 * 60 * 1000)
         {
