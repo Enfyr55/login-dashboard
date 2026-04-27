@@ -87,10 +87,12 @@
     const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
 
     function formatDate(dateString)
-    {
-        const d = new Date(dateString);
-        return d.toLocaleString("no-NO");
-    }
+	{
+		const fixed = dateString.replace(" ", "T");
+		const d = new Date(fixed);
+
+		return d.toLocaleString("no-NO");
+	}
 
     function updateStatus(lastLogin)
     {
