@@ -125,7 +125,9 @@
             .select("*")
             .order("last_login", { ascending: false })
             .limit(1);
-
+console.log("DATA:", data);
+console.log("ERROR:", error);
+		
         if (error)
         {
             console.error(error);
